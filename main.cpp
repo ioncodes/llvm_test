@@ -24,15 +24,16 @@ int main(int argc, char* argv[])
     auto entry = llvm::BasicBlock::Create(context, "entrypoint", mainFunc);
     builder.SetInsertPoint(entry);
 
-    std::vector<llvm::Type*> printfArgs = { builder.getInt8Ty()->getPointerTo() };
+    std::vector<llvm::Type*> printfArgs = { builder.getInt8Ty()->getPointerTo(), builder.getInt32Ty() };
     llvm::ArrayRef<llvm::Type*> printfArgsRef(printfArgs);
 
     auto printfType = llvm::FunctionType::get(builder.getInt32Ty(), printfArgsRef, false);
     auto printfFunc = module->getOrInsertFunction("printf", printfType);
 
-    auto helloWorldStr = builder.CreateGlobalStringPtr("Hello World!\n", "helloWorldStr");
+    auto fmtStr = builder.CreateGlobalStringPtr("Hello World: %d!\n", "fmtStr");
+    auto result = builder.CreateAdd(builder.getInt32(0), builder.getInt32(1337), "result");
 
-    builder.CreateCall(printfFunc, helloWorldStr);
+    builder.CreateCall(printfFunc, { fmtStr, result });
     builder.CreateRetVoid();
 
     auto success = !llvm::verifyFunction(*mainFunc, &llvm::outs());
